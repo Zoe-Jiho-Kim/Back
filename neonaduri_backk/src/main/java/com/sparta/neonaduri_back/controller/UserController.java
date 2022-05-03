@@ -22,7 +22,6 @@ import com.sparta.neonaduri_back.security.UserDetailsImpl;
 import com.sparta.neonaduri_back.service.GoogleLoginService;
 import com.sparta.neonaduri_back.service.KakaoUserService;
 import com.sparta.neonaduri_back.service.UserService;
-import com.sparta.neonaduri_back.utils.StatusMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
