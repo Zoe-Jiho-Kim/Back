@@ -1,0 +1,11 @@
+cloud:
+  aws:
+    credentials:
+      accessKey: AKIAVWP6DUJ2LJ75CYWH
+      secretKey: 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
+    s3:
+      bucket: seunghodev-bucket
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
