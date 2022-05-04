@@ -40,6 +40,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -160,9 +161,25 @@ public class KakaoUserService {
 
         if (kakaoUser == null) {
             // 회원가입
-            // userName: kakao nickName
+            // userName: kakao email
 
             String nickName = kakaoUserInfo.getNickName();
+
+            Optional<User> nickNameCheck = userRepository.findByNickName(nickName);
+
+            // 닉네임 중복 검사
+            if (nickNameCheck.isPresent()) {
+                String tempNickName = nickName;
+                int i = 1;
+                while (true){
+                    nickName = tempNickName + "_" + i;
+                    Optional<User> nickNameCheck2 = userRepository.findByNickName(nickName);
+                    if (!nickNameCheck2.isPresent()) {
+                        break;
+                    }
+                    i++;
+                }
+            }
             System.out.println("카카오 서비스에서 회원가입할 때 받는 닉네임" + nickName);
 
             // password: random UUID

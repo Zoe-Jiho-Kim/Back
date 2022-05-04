@@ -142,6 +142,7 @@ public class GoogleLoginService {
 
         String userName = googleUserInfo.getUserName();
         String nickName = googleUserInfo.getNickName();
+
         Optional<User> nickNameCheck = userRepository.findByNickName(nickName);
 
         // 닉네임 중복 검사
