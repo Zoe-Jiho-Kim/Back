@@ -1,15 +1,28 @@
 package com.sparta.neonaduri_back.service;
 
+/**
+ * [Service] - 구글 소셜 로그인 Service
+ *
+ * @class   : GoogleLoginService
+ * @author  : 오예령
+ * @since   : 2022.04.30
+ * @version : 1.0
+ *
+ *   수정일     수정자             수정내용
+ *  --------   --------    ---------------------------
+ *  2022.05.04 오예령       email 값 userName으로 변경, 유저 정보 조회 항목 변경
+ *                         유저 정보 조회 Url 변경
+ */
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sparta.neonaduri_back.dto.user.SocialLoginInfoDto;
 import com.sparta.neonaduri_back.model.User;
 import com.sparta.neonaduri_back.repository.UserRepository;
 import com.sparta.neonaduri_back.security.JwtProperties;
 import com.sparta.neonaduri_back.security.UserDetailsImpl;
+import com.sparta.neonaduri_back.security.jwt.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -26,7 +39,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,20 +59,21 @@ public class GoogleLoginService {
     // 구글 로그인
     public void googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
 
-        // 인가코드로 엑세스토큰 가져오기
+        // 1. 인가코드로 엑세스토큰 가져오기
         String accessToken = getAccessToken(code);
+        System.out.println("액세스토큰" + accessToken);
 
-        // 엑세스토큰으로 유저정보 가져오기
-        JsonNode googleUserInfo = getGoogleUserInfo(accessToken);
+        // 2. 엑세스토큰으로 유저정보 가져오기
+        SocialLoginInfoDto googleUserInfo = getGoogleUserInfo(accessToken);
 
-        // 유저확인 & 회원가입
+        // 3. 유저확인 & 회원가입
         User foundUser = getUser(googleUserInfo);
 
-        // 시큐리티 강제 로그인
-        UserDetailsImpl userDetails = securityLogin(foundUser);
+        // 4. 시큐리티 강제 로그인
+        Authentication authentication = securityLogin(foundUser);
 
-        // jwt 토큰 발급
-        jwtToken(response, userDetails);
+        // 5. jwt 토큰 발급
+        jwtToken(response, authentication);
     }
 
     // 인가코드로 엑세스토큰 가져오기
@@ -72,10 +85,10 @@ public class GoogleLoginService {
 
         // 바디에 필요한 정보 담기
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id" , "");
-        body.add("client_secret", "");
+        body.add("client_id" , ""); // 리액트
+        body.add("client_secret", "");  // 리액트
         body.add("code", code);
-        body.add("redirect_uri", "http://localhost:8080/login/oauth2/code");
+        body.add("redirect_uri", "http://localhost:3000/user/google/callback");
         body.add("grant_type", "authorization_code");
 
         // POST 요청 보내기
@@ -96,7 +109,7 @@ public class GoogleLoginService {
     }
 
     // 엑세스토큰으로 유저정보 가져오기
-    private JsonNode getGoogleUserInfo(String accessToken) throws JsonProcessingException {
+    private SocialLoginInfoDto getGoogleUserInfo(String accessToken) throws JsonProcessingException {
 
         // 헤더에 엑세스토큰 담기, Content-type 지정
         HttpHeaders headers = new HttpHeaders();
@@ -107,7 +120,7 @@ public class GoogleLoginService {
         HttpEntity<MultiValueMap<String, String>> googleUser = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.exchange(
-                "https://oauth2.googleapis.com/token",
+                "https://openidconnect.googleapis.com/v1/userinfo",
                 HttpMethod.POST, googleUser,
                 String.class
         );
@@ -116,19 +129,22 @@ public class GoogleLoginService {
         String responseBody = response.getBody();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode googleUserInfo = objectMapper.readTree(responseBody);
-        return googleUserInfo;
+
+        String userName = googleUserInfo.get("email").asText();
+        String nickName = googleUserInfo.get("name").asText();
+        String profileImgUrl = googleUserInfo.get("picture").asText();
+
+        return new SocialLoginInfoDto(userName,nickName,profileImgUrl);
     }
 
     // 유저확인 & 회원가입
-    private User getUser(JsonNode googleUserInfo) {
+    private User getUser(SocialLoginInfoDto googleUserInfo) {
 
-        // 유저정보 작성
-        String providerId = googleUserInfo.get("sub").asText();
-        String providerEmail = googleUserInfo.get("email").asText();
-        String provider = "google";
-        String userName = provider + "_" + providerId;
-        String nickName = googleUserInfo.get("name").asText();
+        String userName = googleUserInfo.getUserName();
+        String nickName = googleUserInfo.getNickName();
         Optional<User> nickNameCheck = userRepository.findByNickName(nickName);
+
+        // 닉네임 중복 검사
         if (nickNameCheck.isPresent()) {
             String tempNickName = nickName;
             int i = 1;
@@ -142,8 +158,9 @@ public class GoogleLoginService {
             }
         }
         String password = passwordEncoder.encode(UUID.randomUUID().toString());
-        String profileImgUrl = "기본 이미지값.png";
-//        UserRoleEnum role = UserRoleEnum.USER;
+        String profileImgUrl = googleUserInfo.getProfileImgUrl();
+
+        int totalLike = 0;
 
         // DB에서 userName으로 가져오기 없으면 회원가입
         User findUser = userRepository.findByUserName(userName).orElse(null);
@@ -152,20 +169,17 @@ public class GoogleLoginService {
                     .userName(userName)
                     .nickName(nickName)
                     .password(password)
-//                    .profileImgUrl(profileImgUrl)
-//                    .profileImgName(null)
-//                    .role(role)
-//                    .provider(provider)
-//                    .providerId(providerId)
-//                    .providerEmail(providerEmail)
+                    .profileImgUrl(profileImgUrl)
+                    .totalLike(totalLike)
                     .build();
+            System.out.println("구글 서비스에서 회원가입할 때 보내는" + "userName " + userName + "nickName " + nickName + profileImgUrl + totalLike);
             userRepository.save(findUser);
         }
         return findUser;
     }
 
     // 시큐리티 강제 로그인
-    private UserDetailsImpl securityLogin(User findUser) {
+    private Authentication securityLogin(User findUser) {
 
         // userDetails 생성
         UserDetailsImpl userDetails = new UserDetailsImpl(findUser);
@@ -178,22 +192,39 @@ public class GoogleLoginService {
         );
         // 강제로 시큐리티 세션에 접근하여 authentication 객체를 저장
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return userDetails;
+        return authentication;
     }
 
     // jwt 토큰 발급
-    private void jwtToken(HttpServletResponse response, UserDetailsImpl userDetails) {
+    private void jwtToken(HttpServletResponse response, Authentication authentication) {
 
-        String jwtToken = JWT.create()
-                // 토큰이름
-                .withSubject("JwtToken : " + userDetails.getUser().getUserName())
-                // 유효시간
-                .withClaim("expireDate", new Date(System.currentTimeMillis() + JwtProperties.tokenValidTime))
-                // userName
-                .withClaim("userName", userDetails.getUser().getUserName())
-                // HMAC256 복호화
-                .sign(Algorithm.HMAC256(JwtProperties.secretKey));
-        log.info("jwtToken : " + jwtToken);
-        response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
+//        String token = JWT.create()
+//                // 토큰이름
+//                .withSubject(userDetails.getUser().getUserName())
+//                // 유효시간
+//                .withClaim("expireDate", new Date(System.currentTimeMillis() + JwtProperties.tokenValidTime))
+//                // userName
+//                .withClaim("userName", userDetails.getUser().getUserName())
+//                // nickName
+//                .withClaim("nickName", userDetails.getUser().getNickName())
+//                // email
+//                .withClaim("email", userDetails.getUser().getEmail())
+//                // profileImgUrl
+//                .withClaim("profileImgUrl", userDetails.getUser().getProfileImgUrl())
+//                // totalLike
+//                .withClaim("totalLike", userDetails.getUser().getTotalLike())
+//                // HMAC256 복호화
+//                .sign(Algorithm.HMAC256(JwtProperties.secretKey));
+
+//        System.out.println("구글 서비스에서 로그인 후 토큰에서 보는" + "userName" + authentication.getPrincipal() + "nickName" + userDetails.getUser().getNickName() + userDetails.getUser().getProfileImgUrl() + userDetails.getUser().getTotalLike());
+
+//        log.info("jwtToken : " + token);
+//        response.addHeader("Authorization", "BEARER" + " " + token);
+//        System.out.println(token);
+
+        UserDetailsImpl userDetailsImpl = ((UserDetailsImpl) authentication.getPrincipal());
+        String token = JwtTokenUtils.generateJwtToken(userDetailsImpl);
+        response.addHeader("Authorization", "BEARER" + " " + token);
+
     }
 }
