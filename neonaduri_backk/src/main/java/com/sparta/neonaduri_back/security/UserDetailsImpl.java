@@ -42,9 +42,11 @@ public class UserDetailsImpl implements UserDetails {
     public String getUsername() {
         return user.getUserName();
     }
+
     public String getNickName(){
         return user.getNickName();
     }
+
     public String getProfileImgUrl(){
         return user.getProfileImgUrl();
     }
@@ -52,7 +54,6 @@ public class UserDetailsImpl implements UserDetails {
     public int getTotalLike(){
         return user.getTotalLike();
     }
-
 
     @Override
     public boolean isAccountNonExpired() {

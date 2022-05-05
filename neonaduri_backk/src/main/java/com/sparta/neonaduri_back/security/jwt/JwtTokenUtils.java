@@ -1,5 +1,18 @@
 package com.sparta.neonaduri_back.security.jwt;
 
+/**
+ * [security] - [jwt] - JwtTokenUtils
+ *
+ * @class   : JwtTokenUtils
+ * @author  : 오예령
+ * @since   : 2022.04.30
+ * @version : 1.0
+ *
+ *   수정일     수정자             수정내용
+ *  --------   --------    ---------------------------
+ *  2022.05.05 오예령       토큰 안에 profileImgUrl, totalLike 추가
+ */
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.sparta.neonaduri_back.security.UserDetailsImpl;
@@ -19,21 +32,20 @@ public final class JwtTokenUtils {
     private static final int JWT_TOKEN_VALID_MILLI_SEC = JWT_TOKEN_VALID_SEC * 1000;
 
     public static final String CLAIM_EXPIRED_DATE = "EXPIRED_DATE";
-    public static final String CLAIM_USER_NAME = "USER_NAME";
-    public static final String CLAIM_NICK_NAME = "NICK_NAME";
-//    public static final String CLAIM_PROFILE_IMGURL = "PROFILE_IMGURL";
-//    public static final String CLAIM_TOTAL_LIKE = "TOTAL_LIKE";
+    public static final String CLAIM_USER_NAME = "userName";
+    public static final String CLAIM_NICK_NAME = "nickName";
+    public static final String CLAIM_PROFILE_IMG_URL = "profileImgUrl";
+    public static final String CLAIM_TOTAL_LIKE = "totalLike";
     public static final String JWT_SECRET = "jwt_secret_!@#$%";
 
     public static String generateJwtToken(UserDetailsImpl userDetails) {
         String token = null;
         try {
             token = JWT.create()
-                    .withIssuer("sparta")
                     .withClaim(CLAIM_USER_NAME, userDetails.getUsername())
                     .withClaim(CLAIM_NICK_NAME, userDetails.getNickName())
-//                    .withClaim(CLAIM_PROFILE_IMGURL, userDetails.getProfileImgUrl())
-//                    .withClaim(CLAIM_TOTAL_LIKE, userDetails.getTotalLike())
+                    .withClaim(CLAIM_PROFILE_IMG_URL, userDetails.getProfileImgUrl())
+                    .withClaim(CLAIM_TOTAL_LIKE, userDetails.getTotalLike())
                     // 토큰 만료 일시 = 현재 시간 + 토큰 유효기간)
                     .withClaim(CLAIM_EXPIRED_DATE, new Date(System.currentTimeMillis() + JWT_TOKEN_VALID_MILLI_SEC))
                     .sign(generateAlgorithm());
