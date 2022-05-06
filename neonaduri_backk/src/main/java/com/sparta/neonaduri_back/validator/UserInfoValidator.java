@@ -58,6 +58,8 @@ public class UserInfoValidator {
     public Page<MyLikePostDto> overPages(List<MyLikePostDto> postList, int start, int end, Pageable pageable, int pageno) {
 
         Page<MyLikePostDto> pages = new PageImpl<>(postList.subList(start, end), pageable, postList.size());
+        System.out.println("총페이지:"+pages.getTotalPages());
+        System.out.println("페이지넘버:"+pageno);
         if(pageno > pages.getTotalPages()){
             throw new IllegalArgumentException("요청할 수 없는 페이지 입니다.");
         }

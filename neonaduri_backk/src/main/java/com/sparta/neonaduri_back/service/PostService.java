@@ -104,10 +104,10 @@ public class PostService {
     }
 
     //페이징
-    private Pageable getPageable(int page) {
+    private Pageable getPageable(int pageno) {
         Sort.Direction direction = Sort.Direction.DESC;
         Sort sort = Sort.by(direction, "id");
-        return PageRequest.of(page, 6, sort);
+        return PageRequest.of(pageno, 6, sort);
     }
     //게시물의 찜개수 세기
     private int countLike(Long postId) {
