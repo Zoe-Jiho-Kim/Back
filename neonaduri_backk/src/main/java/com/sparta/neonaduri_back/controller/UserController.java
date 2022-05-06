@@ -87,9 +87,10 @@ public class UserController {
         return new ResponseEntity<>(userService.isloginChk(userDetails), HttpStatus.OK);
     }
 
+    /*리팩토링 시 마이페이지 기능으로 묶어서(RequestMapping 사용) 정리*/
     // 회원정보 수정
     @PutMapping("/api/user/mypage")
-    public ResponseEntity<StatusMessage> updateUserInfo(@RequestParam("profileImg") MultipartFile multipartFile,
+    public ResponseEntity<StatusMessage> updateUserInfo(@RequestParam("profileImgFile") MultipartFile multipartFile,
                                                         @RequestParam String profileImgUrl,
                                                         @RequestParam("nickName") String nickName,
                                                         @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
