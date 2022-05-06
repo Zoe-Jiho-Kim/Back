@@ -1,4 +1,5 @@
 package com.sparta.neonaduri_back.model;
+
 /**
  * [model] - User
  *
@@ -36,7 +37,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String nickName;
 
     @Column(nullable = true)
@@ -51,14 +52,22 @@ public class User {
     @Column(nullable = true)
     private int totalLike;
 
-    @Builder
-
     // 카카오 회원가입
-    public User(String userName, String password, String nickName, String email) {
+    public User(String userName, String nickName, String password, String profileImgUrl) {
         this.userName = userName;
-        this.password = password;
         this.nickName = nickName;
-        this.email = email;
+        this.password = password;
+        this.profileImgUrl = profileImgUrl;
+    }
+
+    // 구글 회원가입
+    @Builder
+    public User(String userName, String nickName, String password, String profileImgUrl, int totalLike) {
+        this.userName = userName;
+        this.nickName = nickName;
+        this.password = password;
+        this.profileImgUrl = profileImgUrl;
+        this.totalLike = totalLike;
     }
 
     // 회원가입
@@ -75,11 +84,4 @@ public class User {
         this.nickName=nickName;
     }
 
-
-    public User(String userName, String nickName, String passWordEncode, Long kakaoId) {
-        this.userName = userName;
-        this.nickName = nickName;
-        this.password = passWordEncode;
-        this.kakaoId = kakaoId;
-    }
 }

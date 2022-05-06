@@ -16,8 +16,8 @@ package com.sparta.neonaduri_back.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sparta.neonaduri_back.dto.user.DuplicateCheckDto;
 import com.sparta.neonaduri_back.dto.user.IsLoginDto;
-import com.sparta.neonaduri_back.dto.user.KakaoUserInfoDto;
 import com.sparta.neonaduri_back.dto.user.SignupRequestDto;
+import com.sparta.neonaduri_back.dto.user.SocialLoginInfoDto;
 import com.sparta.neonaduri_back.security.UserDetailsImpl;
 import com.sparta.neonaduri_back.service.GoogleLoginService;
 import com.sparta.neonaduri_back.service.KakaoUserService;
@@ -56,16 +56,13 @@ public class UserController {
 
     // 카카오 로그인
     @GetMapping("/user/kakao/callback")
-    public KakaoUserInfoDto kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+    public SocialLoginInfoDto kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         return kakaoUserService.kakaoLogin(code, response);
     }
 
-    // 구글 로그인 API
+    // 구글 로그인
     @GetMapping("/user/google/callback")
-    public void googleLogin(
-            @RequestParam String code,
-            HttpServletResponse response
-    ) throws JsonProcessingException {
+    public void googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         googleLoginService.googleLogin(code, response);
     }
 
@@ -102,7 +99,7 @@ public class UserController {
         if(multipartFile.isEmpty()){
             userService.deleteProfileImg(profileImgUrl,nickName,userId);
         }else{
-            //사용자가 이미지 수정함
+            //사용자가 이미지를 수정함
             userService.updateUserInfo(multipartFile, nickName, userId);
         }
 
@@ -113,5 +110,3 @@ public class UserController {
     }
 
 }
-
-//테스트테스트테스트테스트

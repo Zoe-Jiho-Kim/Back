@@ -11,6 +11,7 @@ package com.sparta.neonaduri_back.security;
  *   수정일     수정자             수정내용
  *  --------   --------    ---------------------------
  *  2022.05.03 오예령       아이디 중복검사 url skipPath 추가 및 로그인 정보 조회 skipPath 삭제
+ *  2022.05.05 오예령       카카오 및 구글 로그인 skipPath 추가
  */
 
 
@@ -155,7 +156,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         skipPathList.add("GET,/h2-console/**");
         skipPathList.add("POST,/h2-console/**");
         // 회원 관리 API 허용'
-        skipPathList.add("GET,/user/kakao/callback");
+        skipPathList.add("GET,/user/kakao/callback/**");
+        skipPathList.add("GET,/user/google/callback/**");
         skipPathList.add("POST,/user/signup");
         skipPathList.add("POST,/api/idcheck");
         skipPathList.add("POST,/user/login");

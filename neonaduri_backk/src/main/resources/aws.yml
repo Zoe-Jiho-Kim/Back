@@ -9,3 +9,14 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
+#구글 소셜 로그인 ,,
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: {client_id}
+            client-secret: {client_secret}
+            scope: profile,email,openid
