@@ -16,10 +16,12 @@ import com.sparta.neonaduri_back.dto.user.SignupRequestDto;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 
 @NoArgsConstructor
+@Setter
 @Getter
 @Entity
 public class User {
@@ -64,8 +66,15 @@ public class User {
         this.userName = userName;
         this.password = password;
         this.nickName = signupRequestDto.getNickName();
-        this.profileImgUrl = "http://k.kakaocdn.net/dn/dpk9l1/btqmGhA2lKL/Oz0wDuJn1YV2DIn92f6DVK/img_110x110.jpg";
+        this.profileImgUrl = "https://seunghodev-bucket.s3.ap-northeast-2.amazonaws.com/%EA%B0%9C%ED%97%88%ED%83%88.jpg";
     }
+
+    //회원 프로필 업데이트
+    public void update(String profileImgUrl, String nickName){
+        this.profileImgUrl=profileImgUrl;
+        this.nickName=nickName;
+    }
+
 
     public User(String userName, String nickName, String passWordEncode, Long kakaoId) {
         this.userName = userName;

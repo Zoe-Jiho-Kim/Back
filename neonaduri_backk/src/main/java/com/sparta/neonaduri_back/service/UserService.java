@@ -24,8 +24,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.Errors;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -37,6 +39,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passWordEncoder;
     private final UserInfoValidator userInfoValidator;
+    private final S3Uploader S3uploader;
 
     //회원가입
    @Transactional
@@ -88,6 +91,44 @@ public class UserService {
                .totalLike(totalLike)
                .build();
        return isLoginDto;
+    }
+
+    //유저 프로필 수정
+    @Transactional
+    public void updateUserInfo(MultipartFile multipartFile, String nickName, Long userId) throws IOException {
+
+        String profileImgUrl=S3uploader.updateImage(multipartFile, "static", userId);
+
+
+        User user=userRepository.findById(userId).orElseThrow(
+                ()->new IllegalArgumentException("회원 정보가 없습니다")
+        );
+        user.update(profileImgUrl, nickName);
+        userRepository.save(user);
+    }
+
+    //사진 삭제했거나 이미지 수정 안했을 시
+    @Transactional
+    public void deleteProfileImg(String profileImgUrl, String nickName, Long userId) {
+
+        //사진 삭제시 -> 기본이미지로 변경
+        if(profileImgUrl.equals("")){
+            User user = userRepository.findById(userId).orElseThrow(
+                    ()->new IllegalArgumentException("해당 유저가 없습니다")
+            );
+            //디폴트 이미지
+            profileImgUrl="https://seunghodev-bucket.s3.ap-northeast-2.amazonaws.com/%EA%B0%9C%ED%97%88%ED%83%88.jpg";
+            user.update(profileImgUrl,nickName);
+            userRepository.save(user);
+        }
+        //수정 안했을 시(url은 존재하는 경우)
+        else{
+            User user = userRepository.findById(userId).orElseThrow(
+                    ()->new IllegalArgumentException("해당 유저가 없습니다")
+            );
+            user.update(profileImgUrl, nickName);
+            userRepository.save(user);
+        }
     }
 
 }
