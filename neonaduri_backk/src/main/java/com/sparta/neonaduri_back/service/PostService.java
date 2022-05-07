@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -128,6 +130,42 @@ public class PostService {
         }
 
         return totalLike;
+    }
+
+    // 플랜 계획 조회하기
+    public PostResponseDto getPost(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(
+                ()-> new IllegalArgumentException("게시물이 존재하지 않습니다.")
+        );
+        return new PostResponseDto(post);
+    }
+
+    // 내가 작성한 플랜조회
+    public Page<Post> getMyPosts(java.awt.print.Pageable pageable, Long postId, UserDetailsImpl userDetails) {
+        Page<Post> posts = postRepository.findAllByPostIdandUserId(pageable, postId, userDetails.getUser().getId());
+        return posts;
+    }
+
+    //삭제하기
+    @Transactional
+    public ResponseEntity<String> deletePlan(Long postId, UserDetailsImpl userDetails) {
+        Post post = postRepository.findByPostId(postId).orElse(null);
+        if (post == null) {
+            return new ResponseEntity<>("없는 게시글입니다.", HttpStatus.BAD_REQUEST);
+        }
+        if (!post.getUser().equals(userDetails.getUser())) {
+            return new ResponseEntity<>("없는 사용자이거나 다른 사용자의 게시글입니다.", HttpStatus.BAD_REQUEST);
+        }
+        postRepository.deleteById(postId);
+        return new ResponseEntity<>("성공적으로 삭제 하였습니다.",HttpStatus.OK);
+    }
+
+    //상세보기
+    public PostResponseDto detailPlan(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(
+                ()-> new IllegalArgumentException("게시물이 존재하지 않습니다.")
+        );
+        return new PostResponseDto(post);
     }
 }
 
